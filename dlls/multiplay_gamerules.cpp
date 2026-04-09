@@ -542,7 +542,7 @@ void CHalfLifeMultiplay::PlayerSpawn( CBasePlayer *pPlayer )
 #if MADNESS_357
 		pPlayer->GiveNamedItem( "weapon_crowbar" );
 		pPlayer->GiveNamedItem( "weapon_357" );
-		pPlayer->GiveAmmo( 24, "357", _357_MAX_CARRY );
+		pPlayer->GiveAmmo( 6, "357", _357_MAX_CARRY );
 #else
 		pPlayer->GiveNamedItem( "weapon_crowbar" );
 		pPlayer->GiveNamedItem( "weapon_9mmhandgun" );
