@@ -21,6 +21,7 @@ cmake_install.cmake
 waf-*
 .waf3-*
 waf3-*
+.cache
 .lock*
 *.pyc
 .vscode/
