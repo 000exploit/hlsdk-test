@@ -240,8 +240,10 @@ void CShotgun::SecondaryAttack( void )
 	}
 
 #ifndef CLIENT_DLL
+#ifdef MADNESS_357
 	/* Let's add some fun to the game, for example this recoil like a gauss */
 	m_pPlayer->pev->velocity = m_pPlayer->pev->velocity - gpGlobals->v_forward * gSkillData.plrDmgBuckshot * 10;
+#endif
 #endif
 
 	PLAYBACK_EVENT_FULL( flags, m_pPlayer->edict(), m_usDoubleFire, 0.0f, g_vecZero, g_vecZero, vecDir.x, vecDir.y, 0, 0, 0, 0 );
