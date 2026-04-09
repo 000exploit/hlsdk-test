@@ -22,6 +22,8 @@
 #include "player.h"
 #include "gamerules.h"
 
+#include "skill.h"
+
 // special deathmatch shotgun spreads
 #define VECTOR_CONE_DM_SHOTGUN	Vector( 0.08716, 0.04362, 0.00 )// 10 degrees by 5 degrees
 #define VECTOR_CONE_DM_DOUBLESHOTGUN Vector( 0.17365, 0.04362, 0.00 ) // 20 degrees by 5 degrees
@@ -236,6 +238,11 @@ void CShotgun::SecondaryAttack( void )
 		// untouched default single player
 		vecDir = m_pPlayer->FireBulletsPlayer( 12, vecSrc, vecAiming, VECTOR_CONE_10DEGREES, 2048, BULLET_PLAYER_BUCKSHOT, 0, 0, m_pPlayer->pev, m_pPlayer->random_seed );
 	}
+
+#ifndef CLIENT_DLL
+	/* Let's add some fun to the game, for example this recoil like a gauss */
+	m_pPlayer->pev->velocity = m_pPlayer->pev->velocity - gpGlobals->v_forward * gSkillData.plrDmgBuckshot * 10;
+#endif
 
 	PLAYBACK_EVENT_FULL( flags, m_pPlayer->edict(), m_usDoubleFire, 0.0f, g_vecZero, g_vecZero, vecDir.x, vecDir.y, 0, 0, 0, 0 );
 
