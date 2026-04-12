@@ -24,3 +24,4 @@ SERVER_LIBRARY_NAME=hl # Default server dll name
 #SERVER_LIBRARY_NAME_LINUX=hl # Override server dll name for Linux and other systems
 
 MADNESS_357=OFF # "357 Madness" specific options
+LEMONPARTY=OFF # Additional features for the lemon party

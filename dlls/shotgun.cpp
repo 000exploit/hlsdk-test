@@ -239,7 +239,7 @@ void CShotgun::SecondaryAttack( void )
 		vecDir = m_pPlayer->FireBulletsPlayer( 12, vecSrc, vecAiming, VECTOR_CONE_10DEGREES, 2048, BULLET_PLAYER_BUCKSHOT, 0, 0, m_pPlayer->pev, m_pPlayer->random_seed );
 	}
 
-#if not defined(CLIENT_DLL) || not defined(MADNESS_357)
+#if not defined(CLIENT_DLL) || not defined(MADNESS_357) || defined(LEMONPARTY)
 	/* Let's add some fun to the game, for example this recoil like a gauss */
 	m_pPlayer->pev->velocity = m_pPlayer->pev->velocity - gpGlobals->v_forward * gSkillData.plrDmgBuckshot * 10;
 #endif
