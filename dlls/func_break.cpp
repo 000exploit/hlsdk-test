@@ -116,6 +116,11 @@ void CBreakable::KeyValue( KeyValueData* pkvd )
 	}
 	else if( FStrEq( pkvd->szKeyName, "lip" ) )
 		pkvd->fHandled = TRUE;
+	else if ( FStrEq( pkvd->szKeyName, "respawn_time" ) )
+	{
+		m_RespawnTime = atof( pkvd->szValue );
+		pkvd->fHandled = TRUE;
+	}
 	else
 		CBaseDelay::KeyValue( pkvd );
 }
@@ -172,6 +177,8 @@ void CBreakable::Spawn( void )
 	// Flag unbreakable glass as "worldbrush" so it will block ALL tracelines
 	if( !IsBreakable() && pev->rendermode != kRenderNormal )
 		pev->flags |= FL_WORLDBRUSH;
+
+	m_SpawnHealth = pev->health;
 }
 
 const char *CBreakable::pSoundsWood[] =
@@ -559,7 +566,8 @@ int CBreakable::TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker, flo
 	pev->health -= flDamage;
 	if( pev->health <= 0 )
 	{
-		Killed( pevAttacker, GIB_NORMAL );
+		if ( !m_RespawnTime )
+			Killed( pevAttacker, GIB_NORMAL );
 		Die();
 		return 0;
 	}
@@ -571,6 +579,61 @@ int CBreakable::TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker, flo
 	return 1;
 }
 
+BOOL CBreakable::IsPlayerInside( void )
+{
+	const Vector mins = pev->origin + pev->mins;
+	const Vector maxs = pev->origin + pev->maxs;
+
+	for ( int i = 1; i <= gpGlobals->maxClients; ++i )
+	{
+		edict_t *player = INDEXENT( i );
+		if ( !player || player->free || player->v.solid == SOLID_NOT )
+			continue;
+
+		if ( mins.x < player->v.absmax.x && maxs.x > player->v.absmin.x &&
+			mins.y < player->v.absmax.y && maxs.y > player->v.absmin.y &&
+			mins.z < player->v.absmax.z && maxs.z > player->v.absmin.z )
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+void CBreakable::Redraw( void )
+{
+	pev->effects &= ~EF_NODRAW;
+	if ( IsPlayerInside() )
+	{
+		pev->nextthink = pev->ltime + 0.5f;
+		pev->renderfx = kRenderFxPulseFast;
+		pev->rendermode = kRenderGlow;
+		pev->renderamt = 70;
+		return;
+	}
+
+	pev->solid = SOLID_BSP;
+	UTIL_SetOrigin( pev, pev->origin );
+
+
+	pev->renderfx = kRenderFxNone;
+	pev->rendermode = kRenderNormal;
+	pev->renderamt = 1;
+	pev->health = m_SpawnHealth;
+	pev->takedamage = FBitSet( pev->spawnflags, SF_BREAK_TRIGGER_ONLY )
+			? DAMAGE_NO : DAMAGE_YES;
+
+	if ( FBitSet( pev->spawnflags, SF_BREAK_TRIGGER_ONLY ) )
+		SetTouch( NULL );
+	else
+		SetTouch( &CBreakable::BreakTouch );
+
+	m_iszSpawnObject = 0;
+	m_fBroken = FALSE;
+
+	SetThink( NULL );
+	pev->nextthink = 0;
+}
+
 void CBreakable::Die( void )
 {
 	Vector vecSpot;// shard origin
@@ -579,8 +642,11 @@ void CBreakable::Die( void )
 	int pitch;
 	float fvol;
 
-	pitch = 95 + RANDOM_LONG( 0, 29 );
+	if ( m_fBroken )
+		return;
+	m_fBroken = TRUE;
 
+	pitch = 95 + RANDOM_LONG( 0, 29 );
 	if( pitch > 97 && pitch < 103 )
 		pitch = 100;
 
@@ -744,8 +810,22 @@ void CBreakable::Die( void )
 	// Fire targets on break
 	SUB_UseTargets( NULL, USE_TOGGLE, 0 );
 
-	SetThink( &CBaseEntity::SUB_Remove );
-	pev->nextthink = pev->ltime + 0.1f;
+	if ( m_RespawnTime > 0)
+	{
+		pev->effects |= EF_NODRAW;
+		pev->takedamage = DAMAGE_NO;
+		pev->health = m_SpawnHealth;
+		SetTouch( NULL );
+
+		SetThink( &CBreakable::Redraw );
+		pev->nextthink = pev->ltime + m_RespawnTime;
+	}
+	else
+	{
+		SetThink( &CBaseEntity::SUB_Remove );
+		pev->nextthink = pev->ltime + 0.1f;
+	}
+
 	if( m_iszSpawnObject )
 		CBaseEntity::Create( STRING( m_iszSpawnObject ), VecBModelOrigin( pev ), pev->angles, edict() );
 
@@ -782,6 +862,7 @@ public:
 	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	void EXPORT StopSound( void );
 	//virtual void	SetActivator( CBaseEntity *pActivator ) { m_pPusher = pActivator; }
+	BOOL PlayerInsideRespawnVolume( void );
 
 	virtual int ObjectCaps( void ) { return ( CBaseEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION ) | FCAP_CONTINUOUS_USE; }
 	virtual int Save( CSave &save );

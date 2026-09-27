@@ -56,9 +56,11 @@ public:
 
 	BOOL IsBreakable( void );
 	BOOL SparkWhenHit( void );
+	BOOL IsPlayerInside( void );
 
 	int DamageDecal( int bitsDamageType );
 
+	void EXPORT Redraw( void );
 	void EXPORT Die( void );
 	virtual int ObjectCaps( void ) { return ( CBaseEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION ); }
 	virtual int Save( CSave &save );
@@ -84,7 +86,10 @@ public:
 	Materials m_Material;
 	Explosions m_Explosion;
 	int m_idShard;
+	int m_fBroken; // HACK
 	float m_angle;
+	float m_RespawnTime;
+	float m_SpawnHealth;
 	string_t m_iszGibModel;
 	string_t m_iszSpawnObject;
 };
